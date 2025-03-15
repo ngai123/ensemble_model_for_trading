@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Analysis Results - {{ results.ticker }}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+            padding-bottom: 40px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .plot-container {
+            text-align: center;
+            overflow: hidden;
+        }
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #198754;
+        }
+        .nav-pills .nav-link {
+            color: #198754;
+        }
+        hr.divider {
+            margin: 30px 0;
+            border-top: 1px solid #dee2e6;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .bg-gradient-header {
+            background: linear-gradient(to right, #198754, #20c997);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="header text-center">
+            <h1 class="display-4">Stock Analysis Results</h1>
+            <p class="lead">
+                <span class="badge bg-success">{{ results.ticker }}</span>
+                <span class="text-muted">{{ results.start_date }} to {{ results.end_date }}</span>
+            </p>
+            <a href="/" class="btn btn-outline-success">Run New Analysis</a>
+        </div>
+
+        <!-- Navigation Pills -->
+        <ul class="nav nav-pills mb-4 justify-content-center" id="results-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="data-tab" data-bs-toggle="pill" data-bs-target="#data" type="button" role="tab" aria-controls="data" aria-selected="true">Data Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="models-tab" data-bs-toggle="pill" data-bs-target="#models" type="button" role="tab" aria-controls="models" aria-selected="false">Model Performance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ensemble-tab" data-bs-toggle="pill" data-bs-target="#ensemble" type="button" role="tab" aria-controls="ensemble" aria-selected="false">Ensemble Results</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="predictions-tab" data-bs-toggle="pill" data-bs-target="#predictions" type="button" role="tab" aria-controls="predictions" aria-selected="false">Predictions</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trading-tab" data-bs-toggle="pill" data-bs-target="#trading" type="button" role="tab" aria-controls="trading" aria-selected="false">Trading Performance</button>
+            </li>
+        </ul>
+
+        <!-- Tab content -->
+        <div class="tab-content" id="results-tabContent">
+            <!-- Data Overview Tab -->
+            <div class="tab-pane fade show active" id="data" role="tabpanel" aria-labelledby="data-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Data Split Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Dataset</th>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                                <th>Number of Samples</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Training</td>
+                                                <td>{{ results.split_info.train.start }}</td>
+                                                <td>{{ results.split_info.train.end }}</td>
+                                                <td>{{ results.split_info.train.count }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Validation</td>
+                                                <td>{{ results.split_info.val.start }}</td>
+                                                <td>{{ results.split_info.val.end }}</td>
+                                                <td>{{ results.split_info.val.count }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Test</td>
+                                                <td>{{ results.split_info.test.start }}</td>
+                                                <td>{{ results.split_info.test.end }}</td>
+                                                <td>{{ results.split_info.test.count }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <h5 class="mt-4">Target Variable Statistics</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Statistic</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Mean Return</td>
+                                                <td>{{ results.target_stats.mean }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Standard Deviation</td>
+                                                <td>{{ results.target_stats.std }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Minimum Return</td>
+                                                <td>{{ results.target_stats.min }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Maximum Return</td>
+                                                <td>{{ results.target_stats.max }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Data Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    {{ results.data_preview | safe }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Returns Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="plot-container">
+                                    <img src="data:image/png;base64,{{ results.plots.returns_distribution }}" alt="Returns Distribution">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Correlation Matrix</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="plot-container">
+                                    <img src="data:image/png;base64,{{ results.plots.correlation_matrix }}" alt="Correlation Matrix">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Data Splits Visualization</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="plot-container">
+                                    <img src="data:image/png;base64,{{ results.plots.data_splits }}" alt="Data Splits">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Performance Tab -->
+            <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Model Validation Scores</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>Validation R²</th>
+                                                <th>Parameters</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for score in results.validation_scores %}
+                                            <tr>
+                                                <td>{{ score.model }}</td>
+                                                <td>{{ score.r2 }}</td>
+                                                <td><small class="text-muted">{{ score.params }}</small></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Test Set Performance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>Mean Squared Error</th>
+                                                <th>R² Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for perf in results.test_performance %}
+                                            <tr>
+                                                <td>{{ perf.model }}</td>
+                                                <td>{{ perf.mse }}</td>
+                                                <td>{{ perf.r2 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Feature Importance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Feature</th>
+                                                    <th>Importance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for feature in results.feature_importance %}
+                                                <tr>
+                                                    <td>{{ feature.feature }}</td>
+                                                    <td>{{ feature.importance }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="plot-container">
+                                            <img src="data:image/png;base64,{{ results.plots.feature_importance }}" alt="Feature Importance">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ensemble Results Tab -->
+            <div class="tab-pane fade" id="ensemble" role="tabpanel" aria-labelledby="ensemble-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Ensemble Weights</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>Weight</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for weight in results.ensemble_weights %}
+                                            <tr>
+                                                <td>{{ weight.model }}</td>
+                                                <td>{{ weight.weight }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="mt-3">
+                                    <strong>Ensemble Performance:</strong><br>
+                                    MSE: {{ results.ensemble_metrics.mse }}<br>
+                                    R²: {{ results.ensemble_metrics.r2 }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Model Comparison</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>Individual Model Performance vs Ensemble</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>MSE</th>
+                                                <th>R²</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for perf in results.test_performance %}
+                                            <tr>
+                                                <td>{{ perf.model }}</td>
+                                                <td>{{ perf.mse }}</td>
+                                                <td>{{ perf.r2 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            <tr class="table-success">
+                                                <td><strong>{{ results.ensemble_metrics.model }}</strong></td>
+                                                <td><strong>{{ results.ensemble_metrics.mse }}</strong></td>
+                                                <td><strong>{{ results.ensemble_metrics.r2 }}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictions Tab -->
+            <div class="tab-pane fade" id="predictions" role="tabpanel" aria-labelledby="predictions-tab">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Model Predictions vs Actual Returns</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="plot-container">
+                                    <img src="data:image/png;base64,{{ results.plots.predictions }}" alt="Model Predictions">
+                                </div>
+                                <div class="mt-3">
+                                    <p class="text-muted">
+                                        This chart shows the actual next-day returns compared with predictions from each individual model and the ensemble.
+                                        The test period displayed is {{ results.split_info.test.start }} to {{ results.split_info.test.end }}.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Trading Performance Tab -->
+            <div class="tab-pane fade" id="trading" role="tabpanel" aria-labelledby="trading-tab">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-gradient-header">
+                                <h5 class="mb-0">Strategy Performance Comparison</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="plot-container mb-4">
+                                    <img src="data:image/png;base64,{{ results.plots.strategy_comparison }}" alt="Strategy Comparison">
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered">
+                                        <thead class="table-success">
+                                            <tr>
+                                                <th>Performance Metric</th>
+                                                <th>ML Ensemble Strategy</th>
+                                                <th>Buy and Hold Strategy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Total Return</strong></td>
+                                                <td>{{ results.strategy_metrics.ml_metrics.total_return_pct }}</td>
+                                                <td>{{ results.strategy_metrics.bh_metrics.total_return_pct }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Annualized Return</strong></td>
+                                                <td>{{ results.strategy_metrics.ml_metrics.annualized_return_pct }}</td>
+                                                <td>{{ results.strategy_metrics.bh_metrics.annualized_return_pct }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Sharpe Ratio</strong></td>
+                                                <td>{{ results.strategy_metrics.ml_metrics.sharpe_ratio }}</td>
+                                                <td>{{ results.strategy_metrics.bh_metrics.sharpe_ratio }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Maximum Drawdown</strong></td>
+                                                <td>{{ results.strategy_metrics.ml_metrics.max_drawdown_pct }}</td>
+                                                <td>{{ results.strategy_metrics.bh_metrics.max_drawdown_pct }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Calmar Ratio</strong></td>
+                                                <td>{{ results.strategy_metrics.ml_metrics.calmar_ratio }}</td>
+                                                <td>{{ results.strategy_metrics.bh_metrics.calmar_ratio }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h5>Strategy Explanation</h5>
+                                    <p>
+                                        <strong>ML Ensemble Strategy:</strong> Uses the ensemble model's predictions to make daily trading decisions.
+                                        When the model predicts a positive return, the strategy buys the stock (if not already holding); 
+                                        when it predicts a negative return, the strategy sells any holdings.
+                                    </p>
+                                    <p>
+                                        <strong>Buy and Hold Strategy:</strong> A benchmark strategy that simply buys the stock on day one
+                                        and holds it throughout the entire test period.
+                                    </p>
+                                    <div class="alert alert-info">
+                                        <strong>Definitions:</strong><br>
+                                        <strong>Total Return:</strong> The percentage gain or loss over the entire period.<br>
+                                        <strong>Annualized Return:</strong> The return normalized to an annual basis.<br>
+                                        <strong>Sharpe Ratio:</strong> A measure of risk-adjusted return (higher is better).<br>
+                                        <strong>Maximum Drawdown:</strong> The largest peak-to-trough decline in portfolio value.<br>
+                                        <strong>Calmar Ratio:</strong> The annualized return divided by the maximum drawdown (higher is better).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

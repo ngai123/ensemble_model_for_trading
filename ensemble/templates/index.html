@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Stock Trading Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+            padding-bottom: 40px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .form-control:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+        }
+        .btn-submit {
+            background-color: #198754;
+            border-color: #198754;
+        }
+        .btn-submit:hover {
+            background-color: #146c43;
+            border-color: #13653f;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 24px;
+            flex-direction: column;
+            display: none;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header text-center">
+            <h1 class="display-4">ML Stock Trading Analysis Dashboard</h1>
+            <p class="lead">Train ML models on stock data and visualize performance metrics</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">Stock Analysis Parameters</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="analysis-form" action="/analyze" method="post">
+                            <div class="mb-3">
+                                <label for="ticker" class="form-label">Stock Ticker Symbol</label>
+                                <input type="text" class="form-control" id="ticker" name="ticker" value="{{ default_ticker }}" required>
+                                <div class="form-text">Enter a valid stock ticker symbol (e.g., AAPL, MSFT, TSLA)</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ default_start_date }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ default_end_date }}" required>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-submit btn-success btn-lg">Run Analysis</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h4>About This Application</h4>
+                        <p>This application runs a comprehensive ML-based stock trading analysis pipeline:</p>
+                        <ol>
+                            <li>Loads historical stock data for the specified ticker and date range</li>
+                            <li>Calculates technical indicators as features</li>
+                            <li>Splits data into training, validation, and test sets</li>
+                            <li>Trains multiple ML models (Linear Regression, Random Forest, XGBoost, Neural Network)</li>
+                            <li>Optimizes ensemble weights to combine model predictions</li>
+                            <li>Evaluates model performance metrics</li>
+                            <li>Visualizes data, predictions, and performance</li>
+                        </ol>
+                        <p class="text-warning">Warning: Processing can take several minutes depending on the date range and stock selected. The hyperparameter tuning has been simplified for web usage.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div>Running analysis, please wait...</div>
+        <div class="mt-2 small">This may take several minutes to complete</div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.getElementById('analysis-form').addEventListener('submit', function() {
+            // Show loading overlay when form is submitted
+            document.getElementById('loading-overlay').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>
